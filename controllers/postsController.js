@@ -1,21 +1,46 @@
 const { users, posts, hashtags } = require('../models');
+const Sequelize = require('sequelize');
+
+
+const Op = Sequelize.Op;
 module.exports = {
-    createPost: async({ content, username, mentions, content_hashtags }) => {
+    createPost: async({ content, username, }) => {
+        const mentionRegex = /\s([@][\w_-]+)/g;
+        const hashtagRegex = /\s([#][\w_-]+)/g;
+        const contentHashtags = content.match(hashtagRegex)
+        const contentMentions = content.match(mentionRegex)
+
         let hashtagsEntry = []
-        content_hashtags.forEach(element => {
-            hashtagsEntry.push({ hashtag: element })
+        contentHashtags.forEach(element => {
+            hashtagsEntry.push({ hashtag: element.substring(1) })
         });
+
+        let mentions = []
+        contentMentions.forEach(element => {
+            mentions.push(element.substring(2))
+        });
+
         return posts.create({ creator: username, content: content, hashtags: hashtagsEntry }, { include: [hashtags, users] }).then(post => {
-            post.addHashtags(post.hashtags).then(hashtag => {
-                users.findAll({ mentions }).then(users => {
-                    post.addMentions(users).then(mention => {
-                        return { message: 'ok' }
+            return post.addHashtags(post.hashtags).then(hashtag => {
+                if (mentions.length > 0) {
+                    return users.findAll({
+                        where: {
+                            username: {
+                                [Op.or]: mentions
+                            }
+                        }
+                    }).then(users => {
+                        return post.addMentions(users).then(mention => {
+                            return ({ message: content.match(hashtagRegex) })
+                        }).catch(err => {
+                            return { error: 'failed to save mentions' }
+                        })
                     }).catch(err => {
-                        return { error: 'failed to save mentions' }
+                        return { error: 'failed to find users mentioned' }
                     })
-                }).catch(err => {
-                    return { error: 'failed to find users mentioned' }
-                })
+                } else {
+                    return ({ message: 'ok' })
+                }
             }).catch(err => {
                 return { error: 'failed to save hashtags' }
             })

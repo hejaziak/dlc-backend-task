@@ -33,9 +33,7 @@ module.exports = {
     },
     signup: async({ username, firstname, lastname, email, password }) => {
         let user = await users.findOne({ where: { username } });
-        console.log(user)
         if (user != null) {
-            console.log('ss')
             return (false, { error: 'username is taken' })
         } else {
             let user = await users.findOne({ where: { email } });
