@@ -1,4 +1,4 @@
-const { users, posts, hashtags } = require('../models');
+const { users, posts, hashtags, PostHashtag } = require('../models');
 const Sequelize = require('sequelize');
 
 
@@ -21,39 +21,73 @@ module.exports = {
         });
 
         return posts.create({ creator: username, content: content, hashtags: hashtagsEntry }, { include: [hashtags, users] }).then(post => {
-            return post.addHashtags(post.hashtags).then(hashtag => {
-                if (mentions.length > 0) {
-                    return users.findAll({
-                        where: {
-                            username: {
-                                [Op.or]: mentions
-                            }
+            if (mentions.length > 0) {
+                return users.findAll({
+                    where: {
+                        username: {
+                            [Op.or]: mentions
                         }
-                    }).then(users => {
-                        return post.addMentions(users).then(mention => {
-                            return ({ message: content.match(hashtagRegex) })
-                        }).catch(err => {
-                            return { error: 'failed to save mentions' }
-                        })
+                    }
+                }).then(users => {
+                    return post.addMentions(users).then(mention => {
+                        return ({ message: 'ok' })
                     }).catch(err => {
-                        return { error: 'failed to find users mentioned' }
+                        return { error: 'failed to save mentions' }
                     })
-                } else {
-                    return ({ message: 'ok' })
-                }
-            }).catch(err => {
-                return { error: 'failed to save hashtags' }
-            })
+                }).catch(err => {
+                    return { error: 'failed to find users mentioned' }
+                })
+            } else {
+                return ({ message: 'ok' })
+            }
         }).catch(err => {
             return { error: 'failed to create post' }
         });
     },
     getAllPosts: async() => {
-        return await posts.findAll();
+        return await posts.findAll({ include: [hashtags] });
     },
     getPost: async obj => {
         return await posts.findOne({
             where: obj,
         });
+    },
+    getRecent: async() => {
+        return await posts.findAll({
+            limit: 10,
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            attributes: ['id', 'creator', 'content'],
+        }).then(entries => {
+            return entries
+        }).catch(err => {
+            return { error: 'error finding recent posts' }
+        })
+    },
+    getPostsByHashtag: async({ hashtag }) => {
+        return hashtags.findAll({ where: { hashtag: '#' + hashtag }, attributes: ['id'], raw: true }).then(entries => {
+            return posts.findAll({
+                include: [{
+                    model: hashtags,
+                    where: {
+                        [Op.or]: entries
+                    },
+                    attributes: []
+                }],
+                attributes: ['id', 'creator', 'content'],
+                raw: true
+            }).then(result => {
+                let arr = []
+                result.forEach(e => {
+                    arr.push({ id: e.id, creator: e.creator, content: e.content })
+                })
+                return arr
+            }).catch(err => {
+                return { error: 'error finding posts' }
+            })
+        }).catch(err => {
+            return { error: 'error finding hashtag' }
+        })
     }
 }
