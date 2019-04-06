@@ -31,7 +31,7 @@ module.exports = {
                         }
                     }).then(users => {
                         return post.addMentions(users).then(mention => {
-                            return ({ message: content.match(hashtagRegex) })
+                            return ({ message: 'ok' })
                         }).catch(err => {
                             return { error: 'failed to save mentions' }
                         })
@@ -55,5 +55,18 @@ module.exports = {
         return await posts.findOne({
             where: obj,
         });
+    },
+    getRecent: async() => {
+        return await posts.findAll({
+            limit: 10,
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            attributes: ['id', 'creator', 'content'],
+        }).then(entries => {
+            return entries
+        }).catch(err => {
+            return { error: 'error finding recent posts' }
+        })
     }
 }
