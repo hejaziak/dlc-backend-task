@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     username: {
       type: DataTypes.STRING,
       unique: true,
+      primaryKey: true,
       allowNull: false
     },
     firstname: DataTypes.STRING,
@@ -24,6 +25,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   users.associate = function (models) {
     // associations can be defined here
+    users.hasMany(models.posts, {foreignKey:'creator', targetKey:'username'})
+    users.belongsToMany(models.posts,{ through:'postmentions',foreignKey: 'mention' })
   };
   
   users.beforeCreate((user, options) => {
