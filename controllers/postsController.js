@@ -26,20 +26,17 @@ module.exports = {
                     where: {
                         username: {
                             [Op.or]: mentions
-                        } <<
-                        << << < HEAD
+                        }
                     }
                 }).then(users => {
                     return post.addMentions(users).then(mention => {
-                        return ({ message: 'ok' }) ===
-                            === =
+                        return ({ message: 'ok' })
                     }).then(users => {
                         return post.addMentions(users).then(mention => {
-                                return ({ message: 'ok' })
-                            }).catch(err => {
-                                return { error: 'failed to save mentions' }
-                            }) >>>
-                            >>> > f2def0dd38f3037b27baed61b48e72613808c585
+                            return ({ message: 'ok' })
+                        }).catch(err => {
+                            return { error: 'failed to save mentions' }
+                        })
                     }).catch(err => {
                         return { error: 'failed to save mentions' }
                     })
