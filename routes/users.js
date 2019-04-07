@@ -7,8 +7,18 @@ var createError = require('http-errors');
 
 
 /* GET users listing. */
-router.get('/', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.get('/', (req, res, next) => {
     userController.getAllUsers().then(users => {
+        console.log(users)
+        res.json(users)
+    }).catch(err => {
+        next(err)
+    })
+
+});
+router.get('/:username', (req, res, next) => {
+    console.log(req.params)
+    userController.getUser(req.params).then(users => {
         console.log(users)
         res.json(users)
     }).catch(err => {

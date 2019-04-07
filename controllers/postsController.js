@@ -4,49 +4,56 @@ const Sequelize = require('sequelize');
 
 const Op = Sequelize.Op;
 module.exports = {
-    createPost: async({ content, username, }) => {
+    createPost: async({ content, username }) => {
         const mentionRegex = /\s([@][\w_-]+)/g;
         const hashtagRegex = /\s([#][\w_-]+)/g;
         const contentHashtags = content.match(hashtagRegex)
         const contentMentions = content.match(mentionRegex)
 
         let hashtagsEntry = []
-        contentHashtags.forEach(element => {
-            hashtagsEntry.push({ hashtag: element.substring(1) })
-        });
+        if (contentHashtags) {
 
+            contentHashtags.forEach(element => {
+                hashtagsEntry.push({ hashtag: element.substring(1) })
+            });
+        }
         let mentions = []
-        contentMentions.forEach(element => {
-            mentions.push(element.substring(2))
-        });
+        if (contentMentions) {
 
-        return posts.create({ creator: username, content: content, hashtags: hashtagsEntry }, { include: [hashtags, users] }).then(post => {
-            if (mentions.length > 0) {
-                return users.findAll({
-                    where: {
-                        username: {
-                            [Op.or]: mentions
-                        }
-                    }
-                }).then(users => {
-                    return post.addMentions(users).then(mention => {
-                        return ({ message: 'ok' })
-                    }).then(users => {
-                        return post.addMentions(users).then(mention => {
-                            return ({ message: 'ok' })
+            contentMentions.forEach(element => {
+                mentions.push(element.substring(2))
+            });
+        }
+
+        return posts.create({ content: content, hashtags: hashtagsEntry }, { include: [hashtags, users] }).then(post => {
+            return users.findOne({ where: { username } }, { include: [posts] }).then(user => {
+                return user.addPosts(post.id).then(e => {
+                    if (mentions.length > 0) {
+                        return users.findAll({
+                            where: {
+                                username: {
+                                    [Op.or]: mentions
+                                }
+                            }
+                        }).then(usersMentioned => {
+                            return post.addMentions(usersMentioned).then(mention => {
+                                return ({ message: 'ok' })
+                            }).catch(err => {
+                                return { error: 'failed to save mentions' }
+                            })
                         }).catch(err => {
-                            return { error: 'failed to save mentions' }
+                            return { error: 'failed to find users mentioned' }
                         })
-                    }).catch(err => {
-                        return { error: 'failed to save mentions' }
-                    })
+                    } else {
+                        return ({ message: 'ok' })
+                    }
+                    return ({ message: 'ok' })
                 }).catch(err => {
-                    return { error: 'failed to find users mentioned' }
+                    return err
                 })
-            } else {
-                return ({ message: 'ok' })
-            }
+            })
         }).catch(err => {
+            console.log(err)
             return { error: 'failed to create post' }
         });
     },
@@ -79,16 +86,14 @@ module.exports = {
                     where: {
                         [Op.or]: entries
                     },
-                    attributes: []
+                    attributes: [],
+                    through: {
+                        attributes: []
+                    }
                 }],
                 attributes: ['id', 'creator', 'content'],
-                raw: true
             }).then(result => {
-                let arr = []
-                result.forEach(e => {
-                    arr.push({ id: e.id, creator: e.creator, content: e.content })
-                })
-                return arr
+                return result
             }).catch(err => {
                 return { error: 'error finding posts' }
             })

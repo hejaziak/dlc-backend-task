@@ -1,5 +1,6 @@
 const { users, posts } = require('../models');
 const jwt = require('jsonwebtoken');
+const sequelize = require('../models/index');
 
 
 module.exports = {
@@ -9,12 +10,19 @@ module.exports = {
         });
     },
     getAllUsers: async() => {
-        return await users.findAll();
+        return await users.findAll({ include: [posts] });
     },
-    getUser: async obj => {
-        return await users.findOne({
-            where: obj,
-        });
+    getUser: async({ username }) => {
+        let query = "SELECT * FROM users INNER JOIN posts ON users.username = posts.creator WHERE users.username = \"" + username + "\""
+        console.log(query)
+        return sequelize.sequelize.query(query, { type: sequelize.sequelize.QueryTypes.SELECT }).then((results) => {
+            let posts = []
+            results.forEach(element => {
+                posts.push({ id: element.id, content: element.content })
+            });
+            let profile = { username: results[0].username, firstname: results[0].firstname, lastname: results[0].lastname, email: results[0].email, posts: posts }
+            return profile
+        })
     },
     login: async(username, password) => {
         if (username && password) {
@@ -40,7 +48,7 @@ module.exports = {
             if (user != null) {
                 return ({ error: 'email is taken' })
             } else {
-                users.create({ username, firstname, lastname, email, password }).then(user => {
+                return users.create({ username, firstname, lastname, email, password }).then(user => {
                     return ({ message: 'successful' })
                 }).catch(err => {
                     console.log("heee")
