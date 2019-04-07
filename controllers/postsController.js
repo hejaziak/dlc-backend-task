@@ -69,7 +69,7 @@ module.exports = {
                             return { error: { text: messages.posts.userFail, status: 400 } }
                         })
                     } else {
-                        return ({ message: { text: messages.posts.successfulCreation, status: 400 } })
+                        return ({ message: messages.posts.successfulCreation })
                     }
                 }).catch(err => {
                     return err
