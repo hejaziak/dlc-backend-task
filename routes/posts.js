@@ -1,13 +1,14 @@
 var express = require('express');
 var router = express.Router();
 var createError = require('http-errors');
+const passport = require('passport')
 
 const postsController = require('../controllers/postsController')
 
 /* GET home page. */
-router.post('/', (req, res, next) => {
-    // console.log(req.body.mentions)
-    postsController.createPost(req.body).then(response => {
+router.post('/', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+    console.log(req.user.username)
+    postsController.createPost({ content: req.body.content, username: req.user.username }).then(response => {
         let { error } = response
         if (error) {
             let err = createError(401, error);
@@ -20,10 +21,9 @@ router.post('/', (req, res, next) => {
     });
 });
 
-router.get('/recent', (req, res, next) => {
-    // console.log(req.body.mentions)
-    postsController.getRecent(req.body).then(response => {
-        console.log(response)
+router.get('/recent', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+    console.log(req.user)
+    postsController.getRecent().then(response => {
         let { error } = response
         if (error) {
             let err = createError(error.status, error.text);
@@ -36,7 +36,7 @@ router.get('/recent', (req, res, next) => {
     });
 });
 
-router.get('/hashtag/:hashtag', (req, res, next) => {
+router.get('/hashtag/:hashtag', passport.authenticate('jwt', { session: false }), (req, res, next) => {
     console.log(req.params)
     postsController.getPostsByHashtag(req.params).then(response => {
         console.log(response)
