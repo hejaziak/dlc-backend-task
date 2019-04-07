@@ -1,6 +1,7 @@
 const { users, posts, hashtags, PostHashtag } = require('../models');
 const Sequelize = require('sequelize');
 const { messages } = require('../services/responseMessages')
+const nodemailer = require('nodemailer');
 
 
 const Op = Sequelize.Op;
@@ -25,6 +26,13 @@ module.exports = {
                 mentions.push(element.substring(2))
             });
         }
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'ather.notification@gmail.com',
+                pass: 'password~ather'
+            }
+        });
 
         return posts.create({ content: content, hashtags: hashtagsEntry }, { include: [hashtags, users] }).then(post => {
             return users.findOne({ where: { username } }, { include: [posts] }).then(user => {
@@ -38,7 +46,22 @@ module.exports = {
                             }
                         }).then(usersMentioned => {
                             return post.addMentions(usersMentioned).then(mention => {
-                                return ({ message: 'ok' })
+                                usersMentioned.forEach(element => {
+                                    var mailOptions = {
+                                        from: 'ather.notification@gmail.com',
+                                        to: element.email,
+                                        subject: 'You Were Mentioned',
+                                        text: 'You were mentioned by ' + username + '.'
+                                    };
+                                    transporter.sendMail(mailOptions, function(error, info) {
+                                        if (error) {
+                                            console.log(error);
+                                        } else {
+                                            console.log('Email sent: ' + info.response);
+                                        }
+                                    });
+                                })
+                                return ({ message: messages.posts.successfulCreation })
                             }).catch(err => {
                                 return { error: { text: messages.posts.mentionFail, status: 400 } }
                             })
