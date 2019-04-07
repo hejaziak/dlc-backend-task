@@ -8,7 +8,6 @@ const postsController = require('../controllers/postsController')
 router.post('/', (req, res, next) => {
     // console.log(req.body.mentions)
     postsController.createPost(req.body).then(response => {
-        console.log(response)
         let { error } = response
         if (error) {
             let err = createError(401, error);
