@@ -41,7 +41,7 @@ router.post('/login', async function(req, res, next) {
     userController.login(username, password).then(response => {
         let { error } = response
         if (error) {
-            let err = createError(401, error);
+            let err = createError(error.status, error.text);
             next(err)
         } else {
             res.json(response)
@@ -57,7 +57,7 @@ router.post('/signup', async function(req, res, next) {
         console.log(response)
         let { error } = response
         if (error) {
-            let err = createError(401, error);
+            let err = createError(error.status, error.text);
             next(err)
         } else {
             res.json(response)

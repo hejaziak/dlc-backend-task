@@ -1,5 +1,6 @@
 const { users, posts, hashtags, PostHashtag } = require('../models');
 const Sequelize = require('sequelize');
+const { messages } = require('../services/responseMessages')
 
 
 const Op = Sequelize.Op;
@@ -39,22 +40,20 @@ module.exports = {
                             return post.addMentions(usersMentioned).then(mention => {
                                 return ({ message: 'ok' })
                             }).catch(err => {
-                                return { error: 'failed to save mentions' }
+                                return { error: { text: messages.posts.mentionFail, status: 400 } }
                             })
                         }).catch(err => {
-                            return { error: 'failed to find users mentioned' }
+                            return { error: { text: messages.posts.userFail, status: 400 } }
                         })
                     } else {
-                        return ({ message: 'ok' })
+                        return ({ message: { text: messages.posts.successfulCreation, status: 400 } })
                     }
-                    return ({ message: 'ok' })
                 }).catch(err => {
                     return err
                 })
             })
         }).catch(err => {
-            console.log(err)
-            return { error: 'failed to create post' }
+            return { error: { text: messages.posts.failedCreation, status: 500 } }
         });
     },
     getAllPosts: async() => {
@@ -75,7 +74,7 @@ module.exports = {
         }).then(entries => {
             return entries
         }).catch(err => {
-            return { error: 'error finding recent posts' }
+            return { error: { text: messages.posts.failedRecent, status: 500 } }
         })
     },
     getPostsByHashtag: async({ hashtag }) => {
@@ -93,12 +92,16 @@ module.exports = {
                 }],
                 attributes: ['id', 'creator', 'content'],
             }).then(result => {
-                return result
+                if (result.length > 0)
+                    return result
+                else {
+                    return { error: { text: messages.posts.hashtagNotFound, status: 400 } }
+                }
             }).catch(err => {
-                return { error: 'error finding posts' }
+                return { error: { text: messages.posts.failedPostFinding, status: 500 } }
             })
         }).catch(err => {
-            return { error: 'error finding hashtag' }
+            return { error: { text: messages.posts.failedHashtafFinding, status: 500 } }
         })
 
     }

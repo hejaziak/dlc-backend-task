@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-require('./controllers/passport');
+require('./services/passport');
 
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
