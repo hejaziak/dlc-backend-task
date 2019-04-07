@@ -1,7 +1,7 @@
 const passport = require('passport');
 const passportJWT = require("passport-jwt");
 const { users } = require('../models');
-const userController = require('./userControllers')
+const userController = require('../controllers/userControllers')
 
 const ExtractJWT = passportJWT.ExtractJwt;
 

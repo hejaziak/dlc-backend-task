@@ -26,7 +26,7 @@ router.get('/recent', (req, res, next) => {
         console.log(response)
         let { error } = response
         if (error) {
-            let err = createError(401, error);
+            let err = createError(error.status, error.text);
             next(err)
         } else {
             res.json(response)
@@ -42,7 +42,7 @@ router.get('/hashtag/:hashtag', (req, res, next) => {
         console.log(response)
         let { error } = response
         if (error) {
-            let err = createError(401, error);
+            let err = createError(error.status, error.text);
             next(err)
         } else {
             res.json(response)
